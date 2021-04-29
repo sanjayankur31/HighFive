@@ -19,8 +19,8 @@ namespace HighFive {
 
 inline Reference::Reference(const Object& location, const Object& object)
     : parent_id(location.getId()) {
-    obj_name = details::get_name(
-        [&](char* buffer, hsize_t length) { return H5Iget_name(object.getId(), buffer, length); });
+    obj_name = details::get_name([&](char *buffer, hsize_t length) {
+        return H5Iget_name(object.getId(), buffer, static_cast<size_t>(length)); });
 }
 
 inline void Reference::create_ref(hobj_ref_t* refptr) const {

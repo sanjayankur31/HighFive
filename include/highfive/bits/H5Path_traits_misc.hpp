@@ -34,7 +34,7 @@ inline PathTraits<Derivate>::PathTraits() {
 template <typename Derivate>
 inline std::string PathTraits<Derivate>::getPath() const {
     return details::get_name([this](char* buffer, hsize_t length) {
-        return H5Iget_name(static_cast<const Derivate*>(this)->getId(), buffer, length);
+        return H5Iget_name(static_cast<const Derivate*>(this)->getId(), buffer, static_cast<size_t>(length));
     });
 }
 

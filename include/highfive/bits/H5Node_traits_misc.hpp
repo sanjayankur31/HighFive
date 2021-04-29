@@ -167,14 +167,9 @@ inline size_t NodeTraits<Derivate>::getNumberObjects() const {
 template <typename Derivate>
 inline std::string NodeTraits<Derivate>::getObjectName(size_t index) const {
     return details::get_name([&](char* buffer, hsize_t length) {
-        return H5Lget_name_by_idx(static_cast<const Derivate*>(this)->getId(),
-                                  ".",
-                                  H5_INDEX_NAME,
-                                  H5_ITER_INC,
-                                  index,
-                                  buffer,
-                                  length,
-                                  H5P_DEFAULT);
+        return H5Lget_name_by_idx(
+                    static_cast<const Derivate*>(this)->getId(), ".", H5_INDEX_NAME, H5_ITER_INC,
+                    index, buffer, static_cast<size_t>(length), H5P_DEFAULT);
     });
 }
 

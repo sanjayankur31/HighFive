@@ -79,8 +79,9 @@ inline File::File(const std::string& filename,
 
 inline const std::string& File::getName() const noexcept {
     if (_filename.empty()) {
-        _filename = details::get_name(
-            [this](char* buffer, hsize_t length) { return H5Fget_name(getId(), buffer, length); });
+        _filename = details::get_name([this](char* buffer, hsize_t length) {
+            return H5Fget_name(getId(), buffer, static_cast<size_t>(length));
+        });
     }
     return _filename;
 }
