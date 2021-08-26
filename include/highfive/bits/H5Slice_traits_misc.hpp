@@ -138,6 +138,28 @@ inline Selection SliceTraits<Derivate>::select(const std::vector<size_t>& column
     return select_impl(slab, DataSpace(memdims));
 }
 
+// no data conversion on 64bits platforms
+template <typename T>
+typename std::enable_if<std::is_same<std::size_t, T>::value>::type
+access_with_conversion(const T*& data,
+                       typename std::vector<T>&,
+                       const std::size_t,
+                       const std::vector<std::size_t>& element_ids) {
+    data = reinterpret_cast<const T*>(&(element_ids[0]));
+}
+
+// data conversion on 32bits platforms
+template <typename T>
+typename std::enable_if<!std::is_same<std::size_t, T>::value>::type
+access_with_conversion(const T*& data,
+                       typename std::vector<T>& raw_elements,
+                       const std::size_t length,
+                       const std::vector<std::size_t>& element_ids) {
+    raw_elements.resize(length);
+    std::copy(element_ids.begin(), element_ids.end(), raw_elements.begin());
+    data = raw_elements.data();
+}
+
 template <typename Derivate>
 inline Selection SliceTraits<Derivate>::select(const ElementSet& elements) const {
     const auto& slice = static_cast<const Derivate&>(*this);
@@ -153,15 +175,7 @@ inline Selection SliceTraits<Derivate>::select(const ElementSet& elements) const
     std::vector<hsize_t> raw_elements;
 
     // optimised at compile time
-    // switch for data conversion on 32bits platforms
-    if (std::is_same<std::size_t, hsize_t>::value) {
-        // `if constexpr` can't be used, thus a reinterpret_cast is needed.
-        data = reinterpret_cast<const hsize_t*>(&(elements._ids[0]));
-    } else {
-        raw_elements.resize(length);
-        std::copy(elements._ids.begin(), elements._ids.end(), raw_elements.begin());
-        data = raw_elements.data();
-    }
+    access_with_conversion<>(data, raw_elements, length, elements._ids);
 
     if (H5Sselect_elements(space.getId(), H5S_SELECT_SET, num_elements, data) < 0) {
         HDF5ErrMapper::ToException<DataSpaceException>("Unable to select elements");
@@ -169,7 +183,6 @@ inline Selection SliceTraits<Derivate>::select(const ElementSet& elements) const
 
     return Selection(DataSpace(num_elements), space, details::get_dataset(slice));
 }
-
 
 template <typename Derivate>
 template <typename T>
